@@ -54,6 +54,94 @@ app.get("/", async (req, res) => {
         res.status(err.statusCode).json(err.message);
     }
 });
+ 
+app.post("/api/initiatePayment", async (req, res) => {
+  try {
+    // unique ref for the transaction
+    const orderRef = uuidv4();
+    // Ideally the data passed here should be computed based on business logic
+    const response = await checkout.payments({
+      amount: { currency: "EUR", value: 1000 }, // value is 10€ in minor units
+      reference: orderRef, // required
+      merchantAccount: process.env.MERCHANT_ACCOUNT, // required
+      channel: "Web", // required
+      // we pass the orderRef in return URL to get paymentData during redirects
+      returnUrl: `http://localhost:${process.env.PORT}/api/handleShopperRedirect?orderRef=${orderRef}`, // required for redirect flow
+      browserInfo: req.body.browserInfo,
+      paymentMethod: req.body.paymentMethod // required
+    });
+ 
+    const { action } = response;
+ 
+    if (action) {
+      paymentDataStore[orderRef] = action.paymentData;
+    }
+    res.json(response);
+  } catch (err) {
+    console.error(`Error: ${err.message}, error code: ${err.errorCode}`);
+    res.status(err.statusCode).json(err.message);
+  }
+});
+
+
+// handle both POST & GET requests
+app.all("/api/handleShopperRedirect", async (req, res) => {
+    // Create the payload for submitting payment details
+    const orderRef = req.query.orderRef;
+    const redirect = req.method === "GET" ? req.query : req.body;
+    const details = {};
+    if (redirect.redirectResult) {
+      details.redirectResult = redirect.redirectResult;
+    } else {
+      details.MD = redirect.MD;
+      details.PaRes = redirect.PaRes;
+    }
+   
+    const payload = {
+      details,
+      paymentData: paymentDataStore[orderRef],
+    };
+   
+    try {
+      const response = await checkout.paymentsDetails(payload);
+      // Conditionally handle different result codes for the shopper
+      switch (response.resultCode) {
+        case "Authorised":
+          res.redirect("/result/success");
+          break;
+        case "Pending":
+        case "Received":
+          res.redirect("/result/pending");
+          break;
+        case "Refused":
+          res.redirect("/result/failed");
+          break;
+        default:
+          res.redirect("/result/error");
+          break;
+      }
+    } catch (err) {
+      console.error(`Error: ${err.message}, error code: ${err.errorCode}`);
+      res.redirect("/result/error");
+    }
+  });
+
+  app.post("/api/submitAdditionalDetails", async (req, res) => {
+    // Create the payload for submitting payment details
+    const payload = {
+      details: req.body.details,
+      paymentData: req.body.paymentData,
+    };
+   
+    try {
+      // Return the response back to client (for further action handling or presenting result to shopper)
+      const response = await checkout.paymentsDetails(payload);
+      res.json(response);
+    } catch (err) {
+      console.error(`Error: ${err.message}, error code: ${err.errorCode}`);
+      res.status(err.statusCode).json(err.message);
+    }
+  });
 
 // Start server
 const PORT = process.env.PORT;
