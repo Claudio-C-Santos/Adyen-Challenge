@@ -3,8 +3,6 @@ const path = require("path");
 const hbs = require("express-handlebars");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
-// DELETE because the ref is given in email
-const { uuid } = require("uuidv4");
 const { Client, Config, CheckoutAPI } = require("@adyen/api-library");
 const app = express();
 
@@ -33,8 +31,7 @@ app.engine(
     "handlebars",
     hbs({
         defaultLayout: "main",
-        layoutsDir: __dirname + "/views/layouts",
-        helpers: require("./util/helpers"),            
+        layoutsDir: __dirname + "/views/layouts",           
     })
 );
 
@@ -66,7 +63,7 @@ app.post("/api/getPaymentMethods", async (req, res) => {
 app.post("/api/initiatePayment", async (req, res) => {
   try {
     // unique ref for the transaction
-    const orderRef = uuidv4();
+    const orderRef = "ClaudioSantos_adyenrecruitment";
     // Ideally the data passed here should be computed based on business logic
     const response = await checkout.payments({
       amount: { currency: "EUR", value: 1000 }, // value is 10€ in minor units
@@ -78,8 +75,7 @@ app.post("/api/initiatePayment", async (req, res) => {
         allow3DS2: true,
       },
       // we pass the orderRef in return URL to get paymentData during redirects
-      // UPDATE - Email Url
-      returnUrl: `http://localhost:${process.env.PORT}/api/handleShopperRedirect?orderRef=${orderRef}`, // required for redirect flow
+      returnUrl: `https://docs.adyen.com/`, // required for redirect flow
       browserInfo: req.body.browserInfo,
       paymentMethod: req.body.paymentMethod // required
     });

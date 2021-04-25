@@ -50,20 +50,21 @@ async function initCheckout() {
     const configuration = {
       paymentMethodsResponse: filterUnimplemented(paymentMethodsResponse),
       clientKey,
-      locale: "en_US",
+      locale: "en-NL",
       environment: "test",
       paymentMethodsConfiguration: {
-      // Create 3 card configs
+        ideal: {
+          showImage: true,
+        },
         card: {
-          showPayButton: true,
           hasHolderName: true,
           holderNameRequired: true,
-          name: "Credit or debit card",
+          name: "Debit or Credit Card",
           amount: {
             value: 1000,
-            currency: "EUR"
-          }
-        }
+            currency: "EUR",
+          },
+        },
       },
       onSubmit: (state, component) => {
         if (state.isValid) {
@@ -85,6 +86,7 @@ function filterUnimplemented(pm) {
   pm.paymentMethods = pm.paymentMethods.filter((it) =>
     [
       "scheme",
+      "ideal",
     ].includes(it.type)
   );
   return pm;
