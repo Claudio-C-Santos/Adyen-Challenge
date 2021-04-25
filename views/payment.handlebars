@@ -1,1 +1,14 @@
-<div id="dropin-container"></div>
+{{!-- Hidden divs with data passed from the Express server --}}
+<div id="clientKey" class="hidden">{{ clientKey }}</div>
+<div id="type" class="hidden">{{ type }}</div>
+
+<div id="payment-page">
+  <div class="container">
+    {{!-- The Checkout integration type will be rendered below. --}}
+    <div class="payment-container">
+      <div id={{type}} class="payment"></div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="./implementation.js"></script>

@@ -3,6 +3,7 @@ const path = require("path");
 const hbs = require("express-handlebars");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+// DELETE because the ref is given in email
 const { uuid } = require("uuidv4");
 const { Client, Config, CheckoutAPI } = require("@adyen/api-library");
 const app = express();
@@ -18,7 +19,7 @@ app.use(express.static(path.join(__dirname, "/public")));
 
 // Enables environment variables by parsing the .env file and assigning it to process.env
 dotenv.config({
-    path: "./.env",
+  path: "./.env",
 });
 
 // Adyen Node.js API library boilerplate (configuration, etc.)
@@ -33,7 +34,7 @@ app.engine(
     hbs({
         defaultLayout: "main",
         layoutsDir: __dirname + "/views/layouts",
-        partialsDir: __dirname + "/views/partials",
+        helpers: require("./util/helpers"),            
     })
 );
 
@@ -41,18 +42,25 @@ app.set("view engine", "handlebars");
 
 const paymentDataStore = {};
 
+app.get("/", (req, res) =>
+  res.render("payment", {
+    type: "dropin",
+    clientKey: process.env.CLIENT_KEY,
+  })
+);
+
 // Get payment methods
-app.get("/", async (req, res) => {
-    try {
-        const response = await checkout.paymentMethods({
-            channel: "Web",
-            merchantAccount: process.env.MERCHANT_ACCOUNT,
-        });
-        res.json(response);
-    } catch (err) {
-        console.error(`Error: ${err.message}, error code: ${err.errorCode}`);
-        res.status(err.statusCode).json(err.message);
-    }
+app.post("/api/getPaymentMethods", async (req, res) => {       
+  try {
+    const response = await checkout.paymentMethods({
+      channel: "Web",
+      merchantAccount: process.env.MERCHANT_ACCOUNT,
+    });
+    res.json(response);
+  } catch (err) {
+    console.error(`Error: ${err.message}, error code: ${err.errorCode}`);
+    res.status(err.statusCode).json(err.message);
+  }
 });
  
 app.post("/api/initiatePayment", async (req, res) => {
@@ -65,7 +73,12 @@ app.post("/api/initiatePayment", async (req, res) => {
       reference: orderRef, // required
       merchantAccount: process.env.MERCHANT_ACCOUNT, // required
       channel: "Web", // required
+      additionalData: {
+        // required for 3ds2 native flow
+        allow3DS2: true,
+      },
       // we pass the orderRef in return URL to get paymentData during redirects
+      // UPDATE - Email Url
       returnUrl: `http://localhost:${process.env.PORT}/api/handleShopperRedirect?orderRef=${orderRef}`, // required for redirect flow
       browserInfo: req.body.browserInfo,
       paymentMethod: req.body.paymentMethod // required

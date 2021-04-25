@@ -1,8 +1,5 @@
-const dotenv = require("dotenv");
-
-dotenv.config({
-  path: "./.env",
-});
+const clientKey = document.getElementById("clientKey").innerHTML;
+const type = document.getElementById("type").innerHTML;
 
 async function callServer(url, data) {
   const res = await fetch(url, {
@@ -51,11 +48,12 @@ async function initCheckout() {
   try {
     const paymentMethodsResponse = await callServer("/api/getPaymentMethods");
     const configuration = {
-      paymentMethodsResponse: paymentMethodsResponse,
-      clientKey: process.env.CLIENT_KEY,
+      paymentMethodsResponse: filterUnimplemented(paymentMethodsResponse),
+      clientKey,
       locale: "en_US",
       environment: "test",
       paymentMethodsConfiguration: {
+      // Create 3 card configs
         card: {
           showPayButton: true,
           hasHolderName: true,
@@ -77,10 +75,19 @@ async function initCheckout() {
       },
     };
     const checkout = new AdyenCheckout(configuration);
-    checkout.create("dropin").mount(document.getElementById("#dropin-container"));
+    checkout.create(type).mount(document.getElementById(type));
   } catch (error) {
     console.error(error);
   }
+}
+
+function filterUnimplemented(pm) {
+  pm.paymentMethods = pm.paymentMethods.filter((it) =>
+    [
+      "scheme",
+    ].includes(it.type)
+  );
+  return pm;
 }
 
 initCheckout();
