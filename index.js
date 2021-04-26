@@ -4,6 +4,7 @@ const hbs = require("express-handlebars");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const { Client, Config, CheckoutAPI } = require("@adyen/api-library");
+const { response } = require("express");
 const app = express();
 
 // Set up request logging
@@ -43,6 +44,7 @@ app.get("/", (req, res) =>
   res.render("payment", {
     type: "dropin",
     clientKey: process.env.CLIENT_KEY,
+    response: response,
   })
 );
 
@@ -52,6 +54,8 @@ app.post("/api/getPaymentMethods", async (req, res) => {
     const response = await checkout.paymentMethods({
       channel: "Web",
       merchantAccount: process.env.MERCHANT_ACCOUNT,
+      countryCode: "NL",
+      shopperLocale: "en-NL",
     });
     res.json(response);
   } catch (err) {
@@ -116,17 +120,17 @@ app.all("/api/handleShopperRedirect", async (req, res) => {
       // Conditionally handle different result codes for the shopper
       switch (response.resultCode) {
         case "Authorised":
-          res.redirect("/result/success");
+          res.redirect("/success");
           break;
         case "Pending":
         case "Received":
-          res.redirect("/result/pending");
+          res.redirect("/pending");
           break;
         case "Refused":
-          res.redirect("/result/failed");
+          res.redirect("/failed");
           break;
         default:
-          res.redirect("/result/error");
+          res.redirect("/error");
           break;
       }
     } catch (err) {

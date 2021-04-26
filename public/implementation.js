@@ -1,5 +1,6 @@
 const clientKey = document.getElementById("clientKey").innerHTML;
 const type = document.getElementById("type").innerHTML;
+const paymentMethodsResponse = document.getElementById("paymentMethodsResponse").innerHTML;
 
 async function callServer(url, data) {
   const res = await fetch(url, {
@@ -9,7 +10,6 @@ async function callServer(url, data) {
       "Content-Type": "application/json",
     },
   });
- 
   return await res.json();
 }
 
@@ -19,22 +19,22 @@ function handleServerResponse(res, component) {
   } else {
     switch (res.resultCode) {
       case "Authorised":
-        window.location.href = "/result/success";
+        window.location.href = "/success";
         break;
       case "Pending":
       case "Received":
-        window.location.href = "/result/pending";
+        window.location.href = "/pending";
         break;
       case "Refused":
-        window.location.href = "/result/failed";
+        window.location.href = "/failed";
         break;
       default:
-        window.location.href = "/result/error";
+        window.location.href = "/error";
         break;
     }
   }
 }
- 
+
 async function handleSubmission(state, component, url) {
   try {
     const res = await callServer(url, state.data);
@@ -47,22 +47,24 @@ async function handleSubmission(state, component, url) {
 async function initCheckout() {
   try {
     const paymentMethodsResponse = await callServer("/api/getPaymentMethods");
+    console.log(paymentMethodsResponse);
     const configuration = {
-      paymentMethodsResponse: filterUnimplemented(paymentMethodsResponse),
+      paymentMethodsResponse: paymentMethodsResponse,
       clientKey,
       locale: "en-NL",
       environment: "test",
       paymentMethodsConfiguration: {
-        ideal: {
-          showImage: true,
-        },
         card: {
-          hasHolderName: true,
-          holderNameRequired: true,
-          name: "Debit or Credit Card",
+          name: "AMEX",
+          brands: ['amex'],
           amount: {
             value: 1000,
             currency: "EUR",
+          },
+          hasHolderName: true,
+          positionHolderNameOnTop: true,
+          data: {
+            holderName: "Claudio dos Santos"
           },
         },
       },
@@ -80,16 +82,6 @@ async function initCheckout() {
   } catch (error) {
     console.error(error);
   }
-}
-
-function filterUnimplemented(pm) {
-  pm.paymentMethods = pm.paymentMethods.filter((it) =>
-    [
-      "scheme",
-      "ideal",
-    ].includes(it.type)
-  );
-  return pm;
 }
 
 initCheckout();
