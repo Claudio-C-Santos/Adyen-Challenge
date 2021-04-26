@@ -32,13 +32,14 @@ app.engine(
     "handlebars",
     hbs({
         defaultLayout: "main",
-        layoutsDir: __dirname + "/views/layouts",           
+        layoutsDir: __dirname + "/views/layouts",   
+        helpers: require("./util/helpers"),        
     })
 );
 
 app.set("view engine", "handlebars");
 
-const paymentDataStore = {};
+/* ################# CLIENT SIDE ENDPOINTS ###################### */
 
 app.get("/", (req, res) =>
   res.render("payment", {
@@ -47,6 +48,18 @@ app.get("/", (req, res) =>
     response: response,
   })
 );
+
+app.get("/result/:type", (req, res) =>
+  res.render("result", {
+    type: req.params.type,
+  })
+);
+
+/* ################# end CLIENT SIDE ENDPOINTS ###################### */
+
+/* ################# API ENDPOINTS ###################### */
+
+const paymentDataStore = {};
 
 // Get payment methods
 app.post("/api/getPaymentMethods", async (req, res) => {       
@@ -122,17 +135,17 @@ app.all("/api/handleShopperRedirect", async (req, res) => {
       // Conditionally handle different result codes for the shopper
       switch (response.resultCode) {
         case "Authorised":
-          res.redirect("/success");
+          res.redirect("/result/success");
           break;
         case "Pending":
         case "Received":
-          res.redirect("/pending");
+          res.redirect("/result/pending");
           break;
         case "Refused":
-          res.redirect("/failed");
+          res.redirect("/result/failed");
           break;
         default:
-          res.redirect("/error");
+          res.redirect("/result/error");
           break;
       }
     } catch (err) {
@@ -157,6 +170,8 @@ app.all("/api/handleShopperRedirect", async (req, res) => {
       res.status(err.statusCode).json(err.message);
     }
   });
+
+/* ################# end API ENDPOINTS ###################### */
 
 // Start server
 const PORT = process.env.PORT;

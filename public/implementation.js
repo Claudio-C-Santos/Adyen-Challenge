@@ -19,17 +19,17 @@ function handleServerResponse(res, component) {
   } else {
     switch (res.resultCode) {
       case "Authorised":
-        window.location.href = "/success";
+        window.location.href = "/result/success";
         break;
       case "Pending":
       case "Received":
-        window.location.href = "/pending";
+        window.location.href = "/result/pending";
         break;
       case "Refused":
-        window.location.href = "/failed";
+        window.location.href = "/result/failed";
         break;
       default:
-        window.location.href = "/error";
+        window.location.href = "/result/error";
         break;
     }
   }
@@ -47,7 +47,6 @@ async function handleSubmission(state, component, url) {
 async function initCheckout() {
   try {
     const paymentMethodsResponse = await callServer("/api/getPaymentMethods");
-    console.log(paymentMethodsResponse);
     const configuration = {
       paymentMethodsResponse: paymentMethodsResponse,
       clientKey,
