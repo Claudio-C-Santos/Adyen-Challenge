@@ -1,4 +1,23 @@
-.adyen-checkout__button, 
 .adyen-checkout__button--pay {
-    background-color: rgb(255, 192, 203)
+    background-color: black;
+}
+
+.adyen-checkout__button--pay:hover {
+    box-shadow: 0px 0px 20px #0abf53;
+    background-color: #033618;
+    border-radius: 3px;
+    transition: border-radius 1s, box-shadow 1s, background-color 1s;
+}
+
+.payment-container {
+    border: 3px solid #0abf53;
+    margin: auto;
+}
+
+.adyen-checkout__payment-method {
+    border: 1px solid #0abf53;    
+}
+
+.adyen-checkout__payment-method__name--selected {
+    font-weight: bold;
 }

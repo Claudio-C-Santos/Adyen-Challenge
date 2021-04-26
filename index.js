@@ -56,6 +56,8 @@ app.post("/api/getPaymentMethods", async (req, res) => {
       merchantAccount: process.env.MERCHANT_ACCOUNT,
       countryCode: "NL",
       shopperLocale: "en-NL",
+      allowedPaymentMethods: ["scheme", "ideal"],
+      blockedPaymentMethods: ["paywithgoogle"],
     });
     res.json(response);
   } catch (err) {
